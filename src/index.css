@@ -1,0 +1,23 @@
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background-color: pink;
+}
+
+button {
+  background-color: #f06292;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+button.selected {
+  background-color: #d81b60;
+}
+
+button:hover {
+  background-color: #d81b60;
+}
