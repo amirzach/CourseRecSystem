@@ -36,45 +36,58 @@ data_cleaned = data_cleaned.fillna(0)
 
 # Define the target variable (Recommended Course)
 def assign_course(row):
+    recommended_courses = []
     if row['MATEMATIK'] >= 3.7 and row['MATEMATIK TAMBAHAN'] >= 3.7 and row['FIZIK'] >= 3:
-        return 'Engineering'
-    elif row['BIOLOGI'] >= 3.7 and row['FIZIK'] >= 3 and row['KIMIA'] >= 3:
-        return 'Science'
-    elif row['BIOLOGI'] >= 3.5 and row['KIMIA'] >= 3.5:
-        return 'Biotechnology'
-    elif row['BIOLOGI'] >= 3 and row['KIMIA'] >= 3 and row['PENDIDIKAN SENI VISUAL'] >= 3:
-        return 'Food Technology'
-    elif row['PENDIDIKAN SENI VISUAL'] >= 3.7 and row['BAHASA INGGERIS'] >= 3:
-        return 'Fine Arts and Design'
-    elif row['EKONOMI'] >= 3.5 or row['PERNIAGAAN'] >= 3.5 or row['PRINSIP PERAKAUNAN'] >= 3.5:
-        return 'Commerce'
-    elif row['MATEMATIK'] >= 3.5 and row['BAHASA INGGERIS'] >= 3:
-        return 'Information Technology'
-    elif row['SEJARAH'] >= 3 and row['BAHASA INGGERIS'] >= 3:
-        return 'Law and Policing'
-    elif row['PENDIDIKAN ISLAM'] >= 3.5 or row['TASAWWUR ISLAM'] >= 3.5:
-        return 'Islamic Studies and TESL'
-    elif row['BAHASA MALAYSIA'] >= 3 and row['BAHASA INGGERIS'] >= 3 and row['PENDIDIKAN SENI VISUAL'] >= 3:
-        return 'Arts and Media'
-    elif row['BIOLOGI'] >= 3 and row['MORAL'] >= 3:
-        return 'Psychology and Health'
-    elif row['BAHASA INGGERIS'] >= 3.5 and row['PENDIDIKAN ISLAM'] >= 3.5:
-        return 'Education'
-    elif row['PERNIAGAAN'] >= 3.5 and row['SEJARAH'] >= 3.5:
-        return 'Travel and Hospitality'
-    else:
-        return 'General'
+        recommended_courses.append('Engineering')
+    if row['BIOLOGI'] >= 3.7 and row['FIZIK'] >= 3 and row['KIMIA'] >= 3:
+        recommended_courses.append('Science')
+    if row['BIOLOGI'] >= 3.5 and row['KIMIA'] >= 3.5:
+        recommended_courses.append('Biotechnology')
+    if row['BIOLOGI'] >= 3 and row['KIMIA'] >= 3 and row['PENDIDIKAN SENI VISUAL'] >= 3:
+        recommended_courses.append('Food Technology')
+    if row['PENDIDIKAN SENI VISUAL'] >= 3.7 and row['BAHASA INGGERIS'] >= 3:
+        recommended_courses.append('Fine Arts and Design')
+    if row['EKONOMI'] >= 3.5 or row['PERNIAGAAN'] >= 3.5 or row['PRINSIP PERAKAUNAN'] >= 3.5:
+        recommended_courses.append('Commerce')
+    if row['MATEMATIK'] >= 3.5 and row['BAHASA INGGERIS'] >= 3:
+        recommended_courses.append('Information Technology')
+    if row['SEJARAH'] >= 3 and row['BAHASA INGGERIS'] >= 3:
+        recommended_courses.append('Law and Policing')
+    if row['PENDIDIKAN ISLAM'] >= 3.5 or row['TASAWWUR ISLAM'] >= 3.5:
+        recommended_courses.append('Islamic Studies and TESL')
+    if row['BAHASA MALAYSIA'] >= 3 and row['BAHASA INGGERIS'] >= 3 and row['PENDIDIKAN SENI VISUAL'] >= 3:
+        recommended_courses.append('Arts and Media')
+    if row['BIOLOGI'] >= 3 and row['MORAL'] >= 3:
+        recommended_courses.append('Psychology and Health')
+    if row['BAHASA INGGERIS'] >= 3.5 and row['PENDIDIKAN ISLAM'] >= 3.5:
+        recommended_courses.append('Education')
+    if row['PERNIAGAAN'] >= 3.5 and row['SEJARAH'] >= 3.5:
+        recommended_courses.append('Travel and Hospitality')
+    
+    # If no courses match, recommend 'General'
+    if not recommended_courses:
+        recommended_courses.append('General')
+    
+    return recommended_courses
 
 # Apply the manual rule to assign courses
-data_cleaned['COURSE'] = data_cleaned.apply(assign_course, axis=1)
+data_cleaned['RECOMMENDED_COURSES'] = data_cleaned.apply(assign_course, axis=1)
 
 # Encode target variable (Recommended Course)
 label_encoder = LabelEncoder()
-data_cleaned['COURSE'] = label_encoder.fit_transform(data_cleaned['COURSE'])
+# Flatten the recommended courses list for encoding
+flattened_courses = [course for courses in data_cleaned['RECOMMENDED_COURSES'] for course in courses]
+unique_courses = list(set(flattened_courses))
+
+# Assign numeric labels for each unique course
+course_labels = {course: idx for idx, course in enumerate(unique_courses)}
+
+# Create a new column with numeric labels for the recommended courses
+data_cleaned['COURSE'] = data_cleaned['RECOMMENDED_COURSES'].apply(lambda x: [course_labels[course] for course in x])
 
 # Split the data into features (X) and target (y)
-X = data_cleaned.drop(columns=['COURSE', 'NAME'])
-y = data_cleaned['COURSE']
+X = data_cleaned.drop(columns=['COURSE', 'NAME', 'RECOMMENDED_COURSES'], errors='ignore')  # Drop only existing columns
+y = data_cleaned['COURSE'].apply(lambda x: x[0] if len(x) > 0 else 0)  # Simplify to a single course for classification
 
 # Ensure all columns in X are numeric
 X = X.apply(pd.to_numeric, errors='coerce')  # This will turn any invalid data into NaN
@@ -86,11 +99,11 @@ X = X.fillna(0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # Train a Decision Tree classifier
-model = DecisionTreeClassifier(random_state=42)
-model.fit(X_train, y_train)
+dt_model = DecisionTreeClassifier(random_state=42)
+dt_model.fit(X_train, y_train)
 
 # Predict the course recommendations
-y_pred = model.predict(X_test)
+y_pred = dt_model.predict(X_test)
 
 # Evaluate the model accuracy
 accuracy = accuracy_score(y_test, y_pred)
@@ -98,92 +111,86 @@ accuracy = accuracy_score(y_test, y_pred)
 # Print accuracy as percentage
 print(f'Accuracy: {accuracy * 100:.2f}%')
 
-# Apply the model to the entire dataset (for new predictions)
-data_cleaned['Recommended Course'] = label_encoder.inverse_transform(model.predict(X))
+# First cycle: Recommend multiple courses for all students
+data_cleaned['Recommended Courses'] = data_cleaned['RECOMMENDED_COURSES'].apply(lambda x: ', '.join(x))
 
-# Save the result to a new Excel file
-output_path = r'C:\Users\User\recommended_courses_ml.xlsx'
-data_cleaned.to_excel(output_path, index=False)
+# Save the multiple course recommendations to a new Excel file
+output_path_multiple = r'C:\Users\User\recommended_courses_ml_multiple.xlsx'
+data_cleaned.to_excel(output_path_multiple, index=False)
 
-print(f"Course recommendations saved to {output_path}")
+print(f"Multiple course recommendations saved to {output_path_multiple}")
 
+# Function to get user preferences
 def get_user_preferences():
     print("Please answer the following questions to help modify the course recommendation:")
-    
-    # Example questions based on user's preferences
+
+    # 1. Do you consider yourself more creative, analytical, or practical?
+    creativity_type = input("Do you consider yourself more creative, analytical, or practical? (Type 'Creative', 'Analytical', or 'Practical'): ").lower()
+
+    # 2. Which set of skills or interests best describes you? (Provide options with Potential Fields)
+    print("\nWhich set of skills or interests best describes you? Choose one option:")
+    options = [
+        "A. Problem-solving, logical thinking, and an interest in how things work. (Potential Field: Engineering or Technology)",
+        "B. Curiosity about nature, scientific research, and exploring how the world works. (Potential Field: Science)",
+        "C. Interest in biology, innovation, and working on solutions to health or environmental issues. (Potential Field: Biotechnology)",
+        "D. Creativity in designing or making things, especially in food or other practical applications. (Potential Field: Food Technology or Creative Industries)",
+        "E. Artistic talent, creativity, and a passion for visual expression. (Potential Field: Arts and Design)",
+        "F. Business-minded, with an interest in economics, finance, or managing projects. (Potential Field: Commerce or Business)",
+        "G. Interest in technology, computers, and solving problems using logical approaches. (Potential Field: Information Technology)",
+        "H. Passion for history, law, or making a difference in society through governance or public service. (Potential Field: Law or Social Sciences)",
+        "I. Interest in teaching, religious studies, or exploring cultural traditions. (Potential Field: Education or Religious Studies)",
+        "J. Communication skills, creativity, and a passion for media, storytelling, or the arts. (Potential Field: Media and Arts)",
+        "K. Interest in understanding human behavior, empathy, and helping others. (Potential Field: Psychology or Health Sciences)",
+        "L. Enjoy working with people, sharing knowledge, and guiding others. (Potential Field: Education or Social Services)",
+        "M. Love for exploring new places, cultures, and organizing travel experiences. (Potential Field: Travel and Hospitality)"
+    ]
+    for option in options:
+        print(option)
+    skills_or_interests = input("\nEnter the letter corresponding to your choice (A-M): ").upper()
+
+    # 3. How do you approach solving problems: step-by-step or intuitively?
+    problem_solving = input("How do you approach solving problems: step-by-step or intuitively? (Type 'step-by-step' or 'intuitively'): ").lower()
+
+    # 4. Are you more comfortable working with data, people, or ideas?
+    work_preference = input("Are you more comfortable working with data, people, or ideas? (Type 'Data', 'People', or 'Ideas'): ").lower()
+
+    # 5. How would you describe your learning style: visual, auditory, reading/writing, or kinesthetic?
+    learning_style = input("How would you describe your learning style: visual, auditory, reading/writing, or kinesthetic? ").lower()
+
     preferences = {
-        'Mathematics': int(input("On a scale of 1-5, how confident are you in Mathematics? (1 = Not confident, 5 = Very confident): ")),
-        'Science': int(input("On a scale of 1-5, how confident are you in Science subjects? (1 = Not confident, 5 = Very confident): ")),
-        'Arts': int(input("On a scale of 1-5, how confident are you in Arts subjects? (1 = Not confident, 5 = Very confident): ")),
-        'Business': int(input("On a scale of 1-5, how confident are you in Business-related subjects? (1 = Not confident, 5 = Very confident): ")),
-        'Technology': int(input("On a scale of 1-5, how interested are you in Technology-related fields? (1 = Not interested, 5 = Very interested): ")),
-        'Health': int(input("On a scale of 1-5, how interested are you in Health-related fields? (1 = Not interested, 5 = Very interested): ")),
-        'Design': int(input("On a scale of 1-5, how interested are you in Design or Creative Arts? (1 = Not interested, 5 = Very interested): ")),
-        'Learning Style': input("Do you prefer hands-on practical learning? (Yes/No): ").lower() == 'yes'
+        "creativity_type": creativity_type,
+        "skills_or_interests": skills_or_interests,
+        "problem_solving": problem_solving,
+        "work_preference": work_preference,
+        "learning_style": learning_style
     }
-    
+
     return preferences
 
-# Ask the user for the name of the student to modify
-student_name = input("Enter the name of the student whose course recommendation you want to modify: ")
+# Second cycle: Refine course recommendations based on user preferences
+user_preferences = get_user_preferences()
 
-# Find the row corresponding to the student
-student_row = data_cleaned[data_cleaned['NAME'].str.lower() == student_name.lower()]
+# Refine the recommendation (simple rule-based approach)
+refined_course = None
+if user_preferences["skills_or_interests"] in ["A", "B", "G"]:
+    refined_course = "Engineering"
+elif user_preferences["skills_or_interests"] in ["C", "D"]:
+    refined_course = "Science"
+elif user_preferences["skills_or_interests"] in ["E", "F"]:
+    refined_course = "Fine Arts or Business"
+elif user_preferences["skills_or_interests"] in ["H", "I"]:
+    refined_course = "Law or Education"
+elif user_preferences["skills_or_interests"] in ["K", "L"]:
+    refined_course = "Psychology or Health"
+elif user_preferences["skills_or_interests"] == "M":
+    refined_course = "Travel and Hospitality"
 
-if student_row.empty:
-    print(f"No student found with the name {student_name}. Please check the spelling.")
-else:
-    # Get user preferences for content-based filtering
-    user_preferences = get_user_preferences()
+# Output the refined course recommendation
+print(f"Your refined course recommendation is: {refined_course}")
 
-    # Create a new dataframe for the user's preferences
-    user_df = pd.DataFrame([user_preferences])
+# Save the refined recommendation to a new Excel file
+data_cleaned['Refined Recommended Course'] = refined_course
+output_path_refined = r'C:\Users\User\recommended_courses_ml_refined.xlsx'
+data_cleaned.to_excel(output_path_refined, index=False)
 
-    # Define the feature columns for the dataset (expanded to include new areas)
-    feature_columns = [
-        'MATEMATIK', 'MATEMATIK TAMBAHAN', 'FIZIK', 'BIOLOGI', 'KIMIA', 
-        'BAHASA MALAYSIA', 'BAHASA INGGERIS', 'PENDIDIKAN SENI VISUAL', 
-        'EKONOMI', 'PERNIAGAAN', 'PRINSIP PERAKAUNAN', 'TASAWWUR ISLAM', 
-        'PENDIDIKAN ISLAM', 'SEJARAH', 'MORAL', 'SAINS', 
-        'Learning Style', 'Technology', 'Health', 'Design'
-    ]
-
-    # Initialize missing columns with default values
-    for col in feature_columns:
-        if col not in user_df.columns:
-            user_df[col] = 0  # Default to 0 if the column is missing
-
-    # Add the user's preferences into the appropriate columns
-    user_df['MATEMATIK'] = user_preferences.get('Mathematics', 0)
-    user_df['BIOLOGI'] = user_preferences.get('Science', 0)
-    user_df['PENDIDIKAN SENI VISUAL'] = user_preferences.get('Arts', 0)
-    user_df['EKONOMI'] = user_preferences.get('Business', 0)
-    user_df['Technology'] = user_preferences.get('Technology', 0)
-    user_df['Health'] = user_preferences.get('Health', 0)
-    user_df['Design'] = user_preferences.get('Design', 0)
-    user_df['Learning Style'] = 1 if user_preferences.get('Learning Style', False) else 0
-
-    # Ensure that user_df has the same feature order as X
-    user_df = user_df[feature_columns]
-
-    # Calculate cosine similarity between user preferences and the dataset
-    similarity_scores = cosine_similarity(user_df, X)
-
-    # Get the index of the most similar row (the best course match)
-    best_match_index = np.argmax(similarity_scores)
-
-    # Adjust the course recommendation based on the most similar match
-    recommended_course_based_on_content = label_encoder.inverse_transform([y.iloc[best_match_index]])
-
-    print(f"Based on the student's preferences, we recommend: {recommended_course_based_on_content[0]}")
-
-    # Modify the student's course recommendation in the dataset
-    data_cleaned.loc[data_cleaned['NAME'].str.lower() == student_name.lower(), 'Modified Recommended Course'] = recommended_course_based_on_content[0]
-
-    # Save the result to a new Excel file
-    modified_output_path = r'C:\Users\User\modified_recommended_courses.xlsx'
-    data_cleaned.to_excel(modified_output_path, index=False)
-
-    print(f"Modified course recommendations saved to {modified_output_path}")
-
-
+print(f"Refined course recommendations saved to {output_path_refined}")
