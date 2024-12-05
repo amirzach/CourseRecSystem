@@ -1,108 +1,210 @@
-/* styles.css */
-
+/* Global styles */
 body {
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
   text-align: center;
-  background-color: #ffc0cb;
+  background-color: #ffe4e1;
   margin: 0;
   padding: 0;
 }
 
+/* Heading styles */
 h2 {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: bold;
   margin-top: 20px;
   text-transform: uppercase;
-  color: #000000;
+  color: #800080;
   letter-spacing: 3px;
-  text-shadow: 2px 2px #ffffff;
+  text-shadow: 1px 1px #ffffff;
 }
 
 p {
   font-size: 1.2rem;
   margin: 10px 0;
+  color: #333;
 }
 
+/* Main container */
 .container {
   width: 90%;
-  max-width: 500px;
+  max-width: 600px;
   margin: 20px auto;
-  background-color: #fff;
+  background-color: #ffffff;
   border: 3px solid #ff69b4;
   border-radius: 15px;
-  padding: 20px;
+  padding: 25px;
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+  transition: box-shadow 0.3s;
 }
 
+.container:hover {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Label styles */
 label {
   display: block;
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #4b0082;
+  cursor: pointer;
+}
+
+/* Slider styling */
+.slider-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 15px 0;
+}
+
+.slider-container span {
   font-size: 1rem;
   font-weight: bold;
-  margin-bottom: 5px;
+  color: #555;
 }
 
-select {
+.slider-container input[type="range"] {
+  width: 70%;
+  margin: 0 10px;
+  accent-color: #ff69b4;
+}
+
+/* Subject list styling */
+.subject-list {
+  margin-top: 20px;
+}
+
+.subject-item {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.subject-label {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-transform: capitalize;
+  color: #4b0082;
+}
+
+.grade-select {
   width: 100%;
   padding: 10px;
-  margin-bottom: 15px;
+  border: 2px solid #ff69b4;
+  border-radius: 8px;
   font-size: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  background-color: #fdf8ff;
+  color: #333;
 }
 
-button {
+.grade-select:focus {
+  outline: none;
+  border-color: #ff1493;
+  box-shadow: 0 0 5px rgba(255, 20, 147, 0.5);
+}
+
+/* Add subject section */
+.add-subject-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.add-subject-input {
+  padding: 10px;
+  width: 70%;
+  border: 2px solid #ff69b4;
+  border-radius: 5px;
+  font-size: 1rem;
+  margin-right: 10px;
+  background-color: #fdf8ff;
+  color: #333;
+}
+
+.add-subject-input:focus {
+  outline: none;
+  border-color: #ff1493;
+  box-shadow: 0 0 5px rgba(255, 20, 147, 0.5);
+}
+
+.add-subject-button {
   background-color: #ff69b4;
   color: #fff;
   border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
+  border-radius: 5px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.add-subject-button:hover {
+  background-color: #ff1493;
+  transform: scale(1.05);
+}
+
+/* Submit button */
+.submit-button {
+  background-color: #ff69b4;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 25px;
   font-size: 1.2rem;
   cursor: pointer;
-  margin: 10px;
-  transition: 0.3s;
-  display: inline-block;
-}
-
-button:hover {
-  background-color: #ff1493;
-}
-
-button.selected {
-  background-color: #ff1493;
-}
-
-.question-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.question-buttons button {
-  margin: 10px;
-  width: 150px;
-}
-
-.arrow-buttons {
   margin-top: 20px;
-  display: flex;
-  justify-content: space-between;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
-.arrow-buttons button {
-  background-color: transparent;
-  color: #000;
-  font-size: 2rem;
+.submit-button:hover {
+  background-color: #ff1493;
+  transform: scale(1.05);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px;
+  }
+
+  h2 {
+    font-size: 1.8rem;
+  }
+
+  label {
+    font-size: 1rem;
+  }
+
+  .add-subject-input {
+    width: 60%;
+  }
+
+  .submit-button {
+    font-size: 1.1rem;
+    padding: 10px 20px;
+  }
+}
+
+/* Horizontal radio button styling */
+.horizontal-options {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.horizontal-options label {
+  font-size: 1rem;
   font-weight: bold;
-  border: none;
+  margin: 0 10px;
+  color: #4b0082;
   cursor: pointer;
 }
 
-.recommendation {
-  margin-top: 50px;
-}
-
-.recommendation button {
-  background-color: #ff69b4;
-  font-size: 1.5rem;
-  padding: 15px 30px;
+.horizontal-options input[type="radio"] {
+  margin-right: 5px;
 }
