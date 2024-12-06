@@ -38,6 +38,54 @@ function Questionnaire({ onSubmit }) {
       options: ["1", "2", "3", "4", "5"],
       labels: ["Not Confident", "Very Confident"],
     },
+    {
+      type: "radioScale",
+      question: "How confident are you in your mathematical skills?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not Confident", "Very Confident"],
+    },
+    {
+      type: "radioScale",
+      question: "How confident are you in your mathematical skills?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not Confident", "Very Confident"],
+    },
+    {
+      type: "radioScale",
+      question: "How confident are you in your mathematical skills?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not Confident", "Very Confident"],
+    },
+    {
+      type: "radioScale",
+      question: "How confident are you in your mathematical skills?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not Confident", "Very Confident"],
+    },
+    {
+      type: "radioScale",
+      question: "How confident are you in your mathematical skills?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not Confident", "Very Confident"],
+    },
+    {
+      type: "radioScale",
+      question: "How confident are you in your mathematical skills?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not Confident", "Very Confident"],
+    },
+    {
+      type: "radioScale",
+      question: "How confident are you in your mathematical skills?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not Confident", "Very Confident"],
+    },
+    {
+      type: "radioScale",
+      question: "How confident are you in your mathematical skills?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not Confident", "Very Confident"],
+    },                    
   ];
 
   const handleAnswerChange = (questionIndex, answer) => {
@@ -57,7 +105,7 @@ function Questionnaire({ onSubmit }) {
           <div key={index} className="question">
             <p>{q.question}</p>
             {q.type === "multipleChoice" ? (
-              <div className="horizontal-options">
+              <div className="vertical-options">
                 {q.options.map((option, i) => (
                   <label key={i} className="radio-label">
                     <input
