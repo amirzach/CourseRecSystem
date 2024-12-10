@@ -1,37 +1,33 @@
-import React, { useState } from 'react';
-import GradeSelection from './components/GradeSelection';
-import Questionnaire from './components/Questionnaire';
-import Recommendation from './components/Recommendation';
-import './styles.css';
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import GradeSelection from "./components/GradeSelection";
+import Questionnaire from "./components/Questionnaire";
+import Recommendation from "./components/Recommendation";
+import "./styles.css";
 
 function App() {
-  const [step, setStep] = useState(1);
   const [grades, setGrades] = useState({});
-  const [answer, setAnswer] = useState('');
-  const [course, setCourse] = useState('');
-
-  const handleGradeSubmit = (submittedGrades) => {
-    setGrades(submittedGrades);
-    setStep(2);
-  };
-
-  const handleAnswerSubmit = (submittedAnswer) => {
-    if (submittedAnswer === 'back') {
-      setStep(1);
-      return;
-    }
-    setAnswer(submittedAnswer);
-    const recommendedCourse = submittedAnswer.includes('Agree') ? 'Computer Science' : 'Literature';
-    setCourse(recommendedCourse);
-    setStep(3);
-  };
+  const [responses, setResponses] = useState({});
 
   return (
-    <div className="app">
-      {step === 1 && <GradeSelection onNext={handleGradeSubmit} />}
-      {step === 2 && <Questionnaire onNext={handleAnswerSubmit} />}
-      {step === 3 && <Recommendation course={course} />}
-    </div>
+    <Router>
+      <div className="app">
+        <Routes>
+          <Route
+            path="/"
+            element={<GradeSelection onNext={(submittedGrades) => setGrades(submittedGrades)} />}
+          />
+          <Route
+            path="/questionnaire"
+            element={<Questionnaire grades={grades} onSubmit={(submittedResponses) => setResponses(submittedResponses)} />}
+          />
+          <Route
+            path="/recommendation"
+            element={<Recommendation responses={responses} />}
+          />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
