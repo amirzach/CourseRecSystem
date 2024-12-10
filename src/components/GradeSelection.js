@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import axios from "axios";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles.css";
 
 function GradeSelection({ onNext }) {
@@ -12,6 +14,7 @@ function GradeSelection({ onNext }) {
   });
 
   const [newSubject, setNewSubject] = useState('');
+  const navigate = useNavigate();
 
   const handleGradeChange = (e) => {
     setGrades({ ...grades, [e.target.name]: e.target.value });
@@ -24,8 +27,18 @@ function GradeSelection({ onNext }) {
     }
   };
 
-  const handleSubmit = () => {
-    onNext(grades);
+  const handleSubmit = async () => {
+    try {
+      const gradesArray = Object.entries(grades).map(([subject, grade]) => ({
+        subject,
+        grade,
+      }));
+      await axios.post("http://localhost:5000/grades", gradesArray); // Backend endpoint
+      onNext(grades);
+      navigate("/questionnaire");
+    } catch (error) {
+      console.error("Failed to save grades:", error);
+    }
   };
 
   return (
@@ -37,7 +50,7 @@ function GradeSelection({ onNext }) {
         {Object.keys(grades).map((subject) => (
           <div key={subject} className="subject-item">
             <label className="subject-label">
-              {subject.replace(/([A-Z])/g, ' $1').toLowerCase()}
+              {subject.replace(/([A-Z])/g, " $1").toLowerCase()}
             </label>
             <select
               name={subject}
@@ -48,14 +61,14 @@ function GradeSelection({ onNext }) {
               <option value="">Select</option>
               <option value="A+">A+</option>
               <option value="A">A</option>
-              <option value="A-">A-</option>'A+': 4.3, 'A': 4, 'A-': 3.7, 'B+': 3.3, 'B': 3, 'B-': 2.7, 'C': 2, 'D': 1, 'E': 0.5, 'F': 0}
+              <option value="A-">A-</option>
               <option value="B+">B+</option>
               <option value="B">B</option>
-              <option value="B-">B-</option> 
+              <option value="B-">B-</option>
               <option value="C">C</option>
               <option value="D">D</option>
-              <option value="E">E</option>  
-              <option value="F">F</option>                           
+              <option value="E">E</option>
+              <option value="F">F</option>
             </select>
           </div>
         ))}

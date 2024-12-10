@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles.css";
 
-function Questionnaire({ onSubmit }) {
+function Questionnaire({ grades, onSubmit }) {
   const [responses, setResponses] = useState({});
+  const navigate = useNavigate();
 
   const questions = [
     {
@@ -40,61 +42,158 @@ function Questionnaire({ onSubmit }) {
     },
     {
       type: "radioScale",
-      question: "How confident are you in your mathematical skills?",
+      question: "How would you rate your ability to understand and apply specific scientific concepts like biology, physics and chemistry?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Poor", "Excellent"],
+    },
+    {
+      type: "radioScale",
+      question: "How proficient are you in solving additional mathematics problems?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not Proficient", "Very Proficient"],
+    },
+    {
+      type: "radioScale",
+      question: "How would you rate your artistics or visual design abilities?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Very Weak", "Very Strong"],
+    },
+    {
+      type: "radioScale",
+      question: "How comfortable are you working on experiments or lab-based tasks?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Very Uncomfortable", "Very Comfortable"],
+    },
+    {
+      type: "radioScale",
+      question: "How would you rate your understanding of economics, accounting or business concepts?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Very Weak", "Very Strong"],
+    },
+    {
+      type: "radioScale",
+      question: "How confident are you in your command of the English language, both written and spoken?",
       options: ["1", "2", "3", "4", "5"],
       labels: ["Not Confident", "Very Confident"],
     },
     {
       type: "radioScale",
-      question: "How confident are you in your mathematical skills?",
+      question: "How skilled are you at analyzing historical or legal concepts?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not Skilled", "Highly Skilled"],
+    },
+    {
+      type: "radioScale",
+      question: "How strong is your grasp of Islamic Studies or moral concepts?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Very Weak", "Very Strong"],
+    },
+    {
+      type: "radioScale",
+      question: "How well do you communicate in Bahasa Malaysia?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Poorly", "Fluently"],
+    },
+    {
+      type: "radioScale",
+      question: "How much do you enjoy solving complex problems?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not At All", "Very Much"],
+    },
+    {
+      type: "radioScale",
+      question: "How you prefer hands-on, practical work or theoretical study?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Entirely theoretical", "Entirely Practical"],
+    },
+    {
+      type: "radioScale",
+      question: "How creative are you in coming up with new ideas or designs?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not Creative", "Highly Creative"],
+    },
+    {
+      type: "radioScale",
+      question: "How would you rate your artistics or visual design abilities?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Very Weak", "Very Strong"],
+    },
+    {
+      type: "radioScale",
+      question: "How comfortable are you working with technology and learning new software tools?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not Comfortable", "Very Comfortable"],
+    },
+    {
+      type: "radioScale",
+      question: "Do you enjoy working with numbers and financial data?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not At All", "Very Much"],
+    },
+    {
+      type: "radioScale",
+      question: "How much do you enjoy exploring human behavior or psychological concepts?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not At All", "Very Much"],
+    },
+    {
+      type: "radioScale",
+      question: "Do you enjoy planning trips, learning about different cultures, or engaging in hospitality-related tasks?",
+      options: ["1", "2", "3", "4", "5"],
+      labels: ["Not At All", "Very Much"],
+    },
+    {
+      type: "radioScale",
+      question: "How confident are you in your ability to lead and manage projects or teams?",
       options: ["1", "2", "3", "4", "5"],
       labels: ["Not Confident", "Very Confident"],
     },
     {
       type: "radioScale",
-      question: "How confident are you in your mathematical skills?",
+      question: "Do you prefer working in structured environments or dynamic, creative spaces?",
       options: ["1", "2", "3", "4", "5"],
-      labels: ["Not Confident", "Very Confident"],
-    },
+      labels: ["Entirely structured", "Entirely dynamic"],
+    },  
     {
       type: "radioScale",
-      question: "How confident are you in your mathematical skills?",
+      question: "How interested are you in contributing to society through teaching or educational programs?",
       options: ["1", "2", "3", "4", "5"],
-      labels: ["Not Confident", "Very Confident"],
-    },
-    {
-      type: "radioScale",
-      question: "How confident are you in your mathematical skills?",
-      options: ["1", "2", "3", "4", "5"],
-      labels: ["Not Confident", "Very Confident"],
-    },
-    {
-      type: "radioScale",
-      question: "How confident are you in your mathematical skills?",
-      options: ["1", "2", "3", "4", "5"],
-      labels: ["Not Confident", "Very Confident"],
-    },
-    {
-      type: "radioScale",
-      question: "How confident are you in your mathematical skills?",
-      options: ["1", "2", "3", "4", "5"],
-      labels: ["Not Confident", "Very Confident"],
-    },
-    {
-      type: "radioScale",
-      question: "How confident are you in your mathematical skills?",
-      options: ["1", "2", "3", "4", "5"],
-      labels: ["Not Confident", "Very Confident"],
-    },                    
+      labels: ["Not At All", "Very Interested"],
+    },                                  
   ];
 
   const handleAnswerChange = (questionIndex, answer) => {
     setResponses({ ...responses, [questionIndex]: answer });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(responses);
+
+    const data = {
+      grades,
+      responses,
+    };
+
+    try {
+      const response = await fetch("http://localhost:5000/questionnaire", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        alert("Questionnaire submitted successfully!");
+        navigate("/recommendation");
+      } else {
+        const error = await response.json();
+        alert(`Failed to submit: ${error.error}`);
+      }
+    } catch (err) {
+      console.error("Error submitting questionnaire:", err);
+      alert("An error occurred while submitting the questionnaire.");
+    }
   };
 
   return (
