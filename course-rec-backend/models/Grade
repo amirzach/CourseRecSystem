@@ -1,0 +1,18 @@
+const mongoose = require("mongoose");
+
+const GradeSchema = new mongoose.Schema({
+  bahasaMalaysia: { type: String, required: true },
+  sejarah: { type: String, required: true },
+  english: { type: String, required: true },
+  maths: { type: String, required: true },
+  pendidikanIslam: { type: String, required: false },
+  pendidikanMoral: { type: String, required: false },
+  additionalSubjects: {
+    type: Map,
+    of: String, // Key-value pairs for subject name and grade
+    default: {},
+  },
+  recommendedCourse: { type: String },
+});
+
+module.exports = mongoose.model("Grade", GradeSchema);
