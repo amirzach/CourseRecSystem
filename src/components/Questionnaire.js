@@ -114,12 +114,6 @@ function Questionnaire({ grades, onSubmit }) {
     },
     {
       type: "radioScale",
-      question: "How would you rate your artistics or visual design abilities?",
-      options: ["1", "2", "3", "4", "5"],
-      labels: ["Very Weak", "Very Strong"],
-    },
-    {
-      type: "radioScale",
       question: "How comfortable are you working with technology and learning new software tools?",
       options: ["1", "2", "3", "4", "5"],
       labels: ["Not Comfortable", "Very Comfortable"],
@@ -168,33 +162,77 @@ function Questionnaire({ grades, onSubmit }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const data = {
-      grades,
-      responses,
+  
+    const courseMapping = {
+      Engineering: { questions: [0, 2, 14], weights: [2, 3, 1] },
+      Science: { questions: [1, 9, 10], weights: [3, 2, 1] },
+      Biotechnology: { questions: [1, 7, 8], weights: [3, 2, 1] },
+      "Food Technology": { questions: [1, 6, 7], weights: [2, 2, 1] },
+      "Fine Arts and Design": { questions: [1, 6, 16], weights: [3, 2, 1] },
+      Commerce: { questions: [9, 20, 21], weights: [3, 2, 1] },
+      IT: { questions: [0, 19, 14], weights: [2, 3, 1] },
+      Law: { questions: [11, 3, 21], weights: [2, 2, 1] },
+      Psychology: { questions: [11, 14, 20], weights: [3, 2, 1] },
+      Education: { questions: [11, 23, 22], weights: [3, 2, 1] },
+      "Travel and Hospitality": { questions: [21, 23, 20], weights: [3, 2, 1] },
     };
-
+  
+    const courseScores = {};
+    for (const course in courseMapping) {
+      courseScores[course] = 0;
+    }
+  
+    for (const course in courseMapping) {
+      const { questions, weights } = courseMapping[course];
+      questions.forEach((questionIndex, idx) => {
+        const response = responses[questionIndex];
+        if (response) {
+          const responseScore = isNaN(response) ? 1 : parseInt(response, 10);
+          courseScores[course] += responseScore * weights[idx];
+        }
+      });
+    }
+  
+    const maxScore = Math.max(...Object.values(courseScores));
+    const normalizedScores = {};
+    for (const course in courseScores) {
+      normalizedScores[course] = (courseScores[course] / maxScore).toFixed(2);
+    }
+  
+    const sortedCourses = Object.entries(normalizedScores).sort(
+      (a, b) => b[1] - a[1]
+    );
+    const topCourse = sortedCourses[0][0];
+  
     try {
-      const response = await fetch("http://localhost:5000/questionnaire", {
+      const data = {
+        grades,
+        responses,
+        scores: normalizedScores,
+      };
+  
+      const response = await fetch("http://localhost:5000/refine", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
-
+  
       if (response.ok) {
-        alert("Questionnaire submitted successfully!");
+        const { refinedCourse } = await response.json();
+        alert(`Your recommended course is: ${refinedCourse || topCourse}`);
         navigate("/recommendation");
       } else {
         const error = await response.json();
-        alert(`Failed to submit: ${error.error}`);
+        alert(`Failed to refine recommendation: ${error.error}`);
       }
     } catch (err) {
-      console.error("Error submitting questionnaire:", err);
-      alert("An error occurred while submitting the questionnaire.");
+      console.error("Error refining recommendation:", err);
+      alert("An error occurred while refining the recommendation.");
     }
   };
+  
 
   return (
     <div className="container">
