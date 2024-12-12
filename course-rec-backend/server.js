@@ -21,18 +21,18 @@ mongoose
     console.log("Connected to MongoDB");
   })
   .catch((err) => {
-    console.error("Error connecting to MongoDB:", err);
+    console.error("Error connecting to MongoDB:", err.message);
   });
 
 // Define Mongoose Schemas
 const GradeSchema = new mongoose.Schema({
-  subject: String,
-  grade: String,
+  subject: { type: String, required: true },
+  grade: { type: String, required: true },
 });
 
 const QuestionnaireSchema = new mongoose.Schema({
   grades: [GradeSchema], // Array of grade objects
-  responses: Object, // Object to store questionnaire responses
+  responses: { type: Array, required: true }, // Array to store questionnaire responses
 });
 
 const Grade = mongoose.model("Grade", GradeSchema);
@@ -82,7 +82,7 @@ const assignCourses = (grades) => {
   if (scores["MATEMATIK"] >= 3.5 && scores["BAHASA INGGERIS"] >= 3) {
     recommendedCourses.push("Information Technology");
   }
-  if (scores["SEJARAH"] >= 3 && scores["BAHASAINGGERIS"] >= 3) {
+  if (scores["SEJARAH"] >= 3 && scores["BAHASA INGGERIS"] >= 3) {
     recommendedCourses.push("Law and Policing");
   }
   if (scores["PENDIDIKAN ISLAM"] >= 3.5 || scores["TASAWWUR ISLAM"] >= 3.5) {
@@ -109,16 +109,52 @@ const assignCourses = (grades) => {
   return recommendedCourses;
 };
 
+// Content-Based Filtering Logic
+const refineRecommendation = (recommendedCourses, responses) => {
+  const coursePreferences = {
+    Engineering: ["Analytical", "Problem-solving", "Step-by-step", "Data", 5],
+    Science: ["Analytical", "Curiosity about nature", "Step-by-step", "Data", 4],
+    Biotechnology: ["Curiosity about nature", "Problem-solving", "Step-by-step", "Ideas", 4],
+    "Food Technology": ["Practical", "Creativity in designing", "Hands-on", "Ideas", 3],
+    "Fine Arts and Design": ["Creative", "Artistic talent", "Highly Creative", "Ideas", 5],
+    Commerce: ["Business-minded", "Structured", "Working with numbers", "Data", 4],
+    IT: ["Analytical", "Comfortable with technology", "Problem-solving", "Data", 4],
+    Law: ["Highly Skilled", "Analyzing legal concepts", "Structured", "Ideas", 4],
+    Psychology: ["Exploring human behavior", "People-oriented", "Dynamic", "Ideas", 5],
+    Education: ["Teaching", "People-oriented", "Structured", "Ideas", 4],
+    "Travel and Hospitality": ["Hospitality-related tasks", "People-oriented", "Dynamic", "Ideas", 4],
+  };
+
+  const scores = {};
+
+  for (const course of recommendedCourses) {
+    let score = 0;
+    const preferences = coursePreferences[course];
+
+    if (!preferences) continue;
+
+    // Adjust score based on questionnaire responses
+    if (responses.includes(preferences[0])) score += 1;
+    if (responses.includes(preferences[1])) score += 1;
+    if (responses.includes(preferences[2])) score += 1;
+    if (responses.includes(preferences[3])) score += 1;
+    if (responses[4] >= preferences[4]) score += 1;
+
+    scores[course] = score;
+  }
+
+  // Return the course with the highest score
+  return Object.keys(scores).reduce((a, b) => (scores[a] > scores[b] ? a : b), recommendedCourses[0] || null);
+};
+
 // Routes for Grades
 app.post("/grades", async (req, res) => {
-  console.log(req.body); // Debugging
   try {
     const grades = req.body;
     const savedGrades = await Grade.insertMany(grades);
     res.status(201).json(savedGrades);
   } catch (err) {
-    console.error("Failed to save grades:", err);
-    res.status(500).json({ error: "Failed to save grades" });
+    res.status(500).json({ error: "Failed to save grades", details: err.message });
   }
 });
 
@@ -127,7 +163,7 @@ app.get("/grades", async (req, res) => {
     const grades = await Grade.find();
     res.status(200).json(grades);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch grades" });
+    res.status(500).json({ error: "Failed to fetch grades", details: err.message });
   }
 });
 
@@ -138,8 +174,28 @@ app.post("/recommend", async (req, res) => {
     const recommendedCourses = assignCourses(grades);
     res.status(200).json({ recommendedCourses });
   } catch (err) {
-    console.error("Error generating recommendation:", err);
-    res.status(500).json({ error: "Failed to generate recommendation" });
+    res.status(500).json({ error: "Failed to generate recommendation", details: err.message });
+  }
+});
+
+// Refined Recommendation Route
+app.post("/refine", async (req, res) => {
+  try {
+    const { grades, responses } = req.body;
+
+    // Generate initial recommendations
+    const recommendedCourses = assignCourses(grades);
+
+    // Save the questionnaire data to MongoDB
+    const questionnaire = new Questionnaire({ grades, responses });
+    await questionnaire.save();
+
+    // Refine recommendation using questionnaire responses
+    const refinedCourse = refineRecommendation(recommendedCourses, responses);
+
+    res.status(200).json({ refinedCourse });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to refine recommendation", details: err.message });
   }
 });
 
