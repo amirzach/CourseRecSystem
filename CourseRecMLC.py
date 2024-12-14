@@ -1,9 +1,9 @@
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
-import numpy as np
 
 # Function to convert letter grades to numeric values
 def grade_to_numeric(grade):
@@ -120,77 +120,99 @@ data_cleaned.to_excel(output_path_multiple, index=False)
 
 print(f"Multiple course recommendations saved to {output_path_multiple}")
 
-# Function to get user preferences
-def get_user_preferences():
-    print("Please answer the following questions to help modify the course recommendation:")
+# Function to select the user to modify before proceeding
+def select_user(data):
+    print("Please select the user whose course recommendations will be modified:")
+    print("Available users:")
+    for idx, name in enumerate(data['NAME'].unique(), 1):
+        print(f"{idx}. {name}")
+    
+    user_choice = int(input("Enter the number corresponding to the user: "))
+    
+    selected_user_name = data['NAME'].unique()[user_choice - 1]
+    selected_user_data = data[data['NAME'] == selected_user_name]
+    
+    return selected_user_data, selected_user_name
 
-    # 1. Do you consider yourself more creative, analytical, or practical?
-    creativity_type = input("Do you consider yourself more creative, analytical, or practical? (Type 'Creative', 'Analytical', or 'Practical'): ").lower()
+# Function to ask users refined questions and calculate a score for courses
+def calculate_course_scores(user_preferences, course_profiles):
+    scores = {}
+    for course, profile in course_profiles.items():
+        score = sum([profile[feature] * user_preferences.get(feature, 0) for feature in profile])
+        scores[course] = score
+    return scores
 
-    # 2. Which set of skills or interests best describes you? (Provide options with Potential Fields)
-    print("\nWhich set of skills or interests best describes you? Choose one option:")
-    options = [
-        "A. Problem-solving, logical thinking, and an interest in how things work. (Potential Field: Engineering or Technology)",
-        "B. Curiosity about nature, scientific research, and exploring how the world works. (Potential Field: Science)",
-        "C. Interest in biology, innovation, and working on solutions to health or environmental issues. (Potential Field: Biotechnology)",
-        "D. Creativity in designing or making things, especially in food or other practical applications. (Potential Field: Food Technology or Creative Industries)",
-        "E. Artistic talent, creativity, and a passion for visual expression. (Potential Field: Arts and Design)",
-        "F. Business-minded, with an interest in economics, finance, or managing projects. (Potential Field: Commerce or Business)",
-        "G. Interest in technology, computers, and solving problems using logical approaches. (Potential Field: Information Technology)",
-        "H. Passion for history, law, or making a difference in society through governance or public service. (Potential Field: Law or Social Sciences)",
-        "I. Interest in teaching, religious studies, or exploring cultural traditions. (Potential Field: Education or Religious Studies)",
-        "J. Communication skills, creativity, and a passion for media, storytelling, or the arts. (Potential Field: Media and Arts)",
-        "K. Interest in understanding human behavior, empathy, and helping others. (Potential Field: Psychology or Health Sciences)",
-        "L. Enjoy working with people, sharing knowledge, and guiding others. (Potential Field: Education or Social Services)",
-        "M. Love for exploring new places, cultures, and organizing travel experiences. (Potential Field: Travel and Hospitality)"
-    ]
-    for option in options:
-        print(option)
-    skills_or_interests = input("\nEnter the letter corresponding to your choice (A-M): ").upper()
+def refine_courses(user_preferences, recommended_courses, course_profiles):
+    # Calculate course scores
+    course_scores = calculate_course_scores(user_preferences, course_profiles)
+    
+    # Validate recommended courses against available course profiles
+    valid_courses = [course for course in recommended_courses if course in course_profiles]
+    
+    if not valid_courses:
+        print("Error: None of the recommended courses have profiles in the system.")
+        return None  # Exit or handle error appropriately
+    
+    # Filter scores for valid recommended courses only
+    filtered_scores = {course: course_scores.get(course, 0) for course in valid_courses}
+    
+    # Sort courses by score (descending)
+    sorted_courses = sorted(filtered_scores.items(), key=lambda x: x[1], reverse=True)
+    
+    # Decision tree classifier for final decision
+    # Generate sample decision tree input data
+    X = np.array([[course_profiles[course][feature] for feature in user_preferences.keys()] for course in valid_courses])
+    y = valid_courses
+    decision_tree = DecisionTreeClassifier()
+    decision_tree.fit(X, y)
+    
+    # Predict the most suitable course based on user preferences
+    refined_course = decision_tree.predict([list(user_preferences.values())])[0]
+    
+    # If refined course is not in valid recommended courses, default to the top-scored course
+    if refined_course not in valid_courses:
+        refined_course = sorted_courses[0][0]
+    
+    return refined_course
 
-    # 3. How do you approach solving problems: step-by-step or intuitively?
-    problem_solving = input("How do you approach solving problems: step-by-step or intuitively? (Type 'step-by-step' or 'intuitively'): ").lower()
+# Example course profiles (features can include skills, interest, difficulty, etc.)
+course_profiles = {
+    "Engineering": {"math": 5, "science": 4, "creativity": 2, "teamwork": 3},
+    "Science": {"math": 4, "science": 5, "creativity": 3, "teamwork": 2},
+    "Fine Arts": {"math": 1, "science": 1, "creativity": 5, "teamwork": 4},
+    "Law": {"math": 2, "science": 2, "creativity": 3, "teamwork": 5},
+    "Psychology": {"math": 2, "science": 3, "creativity": 4, "teamwork": 5},
+    "Hospitality": {"math": 1, "science": 2, "creativity": 4, "teamwork": 5}
+}
 
-    # 4. Are you more comfortable working with data, people, or ideas?
-    work_preference = input("Are you more comfortable working with data, people, or ideas? (Type 'Data', 'People', or 'Ideas'): ").lower()
+# Refine course recommendations for a selected user
+selected_user_data, selected_user_name = select_user(data_cleaned)
 
-    # 5. How would you describe your learning style: visual, auditory, reading/writing, or kinesthetic?
-    learning_style = input("How would you describe your learning style: visual, auditory, reading/writing, or kinesthetic? ").lower()
+# Get the recommended courses for the selected user
+recommended_courses_for_user = selected_user_data['RECOMMENDED_COURSES'].iloc[0]  # Assuming one row per user
+print(f"Original course recommendations for {selected_user_name}: {', '.join(recommended_courses_for_user)}")
 
-    preferences = {
-        "creativity_type": creativity_type,
-        "skills_or_interests": skills_or_interests,
-        "problem_solving": problem_solving,
-        "work_preference": work_preference,
-        "learning_style": learning_style
-    }
+# Get user preferences (ask refined questions)
+print("Answer the following questions to refine your preferences:")
+user_preferences = {
+    "math": int(input("Rate your interest in mathematics (1-5): ")),
+    "science": int(input("Rate your interest in science (1-5): ")),
+    "creativity": int(input("Rate your creativity level (1-5): ")),
+    "teamwork": int(input("Rate your ability to work in teams (1-5): "))
+}
 
-    return preferences
-
-# Second cycle: Refine course recommendations based on user preferences
-user_preferences = get_user_preferences()
-
-# Refine the recommendation (simple rule-based approach)
-refined_course = None
-if user_preferences["skills_or_interests"] in ["A", "B", "G"]:
-    refined_course = "Engineering"
-elif user_preferences["skills_or_interests"] in ["C", "D"]:
-    refined_course = "Science"
-elif user_preferences["skills_or_interests"] in ["E", "F"]:
-    refined_course = "Fine Arts or Business"
-elif user_preferences["skills_or_interests"] in ["H", "I"]:
-    refined_course = "Law or Education"
-elif user_preferences["skills_or_interests"] in ["K", "L"]:
-    refined_course = "Psychology or Health"
-elif user_preferences["skills_or_interests"] == "M":
-    refined_course = "Travel and Hospitality"
+# Refine the course recommendations using the decision tree
+refined_course = refine_courses(user_preferences, recommended_courses_for_user, course_profiles)
 
 # Output the refined course recommendation
-print(f"Your refined course recommendation is: {refined_course}")
+print(f"Refined course recommendation for {selected_user_name}: {refined_course}")
 
-# Save the refined recommendation to a new Excel file
-data_cleaned['Refined Recommended Course'] = refined_course
-output_path_refined = r'C:\Users\User\recommended_courses_ml_refined.xlsx'
+# Update the user's refined course in the dataset
+data_cleaned.loc[data_cleaned['NAME'] == selected_user_name, 'Refined Recommended Course'] = refined_course
+
+# Save the updated recommendations to a new Excel file
+output_path_refined = r'C:\Users\User\recommended_courses_ml_refined_updated.xlsx'
 data_cleaned.to_excel(output_path_refined, index=False)
 
 print(f"Refined course recommendations saved to {output_path_refined}")
+
