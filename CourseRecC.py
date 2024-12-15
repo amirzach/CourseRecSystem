@@ -1,144 +1,149 @@
-from sklearn.tree import DecisionTreeClassifier
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 
-# Extended dataset with features aligned to the questionnaire
-data = {
-    "Creative_Analytical_Practical": ["Creative", "Analytical", "Practical", "Analytical", "Creative", "Practical", "Analytical", "Creative", "Analytical", "Practical", "Creative", "Analytical", "Practical", "Creative", "Creative", "Practical", "Analytical", "Creative", "Practical", "Analytical"],
-    "Skill_Interest_Set": ["Arts and Design", "Engineering or Technology", "Business", "Science", "Biotechnology", "Food Technology", "Fine Arts and Design", "Commerce", "Information Technology", "Law and Policing", "Islamic Studies and TESL", "Arts and Media", "Psychology and Health", "Education", "Travel and Hospitality", "General", "Engineering", "Science", "Biotechnology", "Food Technology"],
-    "Problem_Solving_Approach": ["Intuitively", "Step-by-step", "Step-by-step", "Intuitively", "Step-by-step", "Step-by-step", "Intuitively", "Step-by-step", "Intuitively", "Step-by-step", "Step-by-step", "Intuitively", "Intuitively", "Step-by-step", "Step-by-step", "Intuitively", "Step-by-step", "Step-by-step", "Intuitively", "Step-by-step"],
-    "Comfort_Working_With": ["Ideas", "Data", "People", "Data", "Ideas", "People", "Ideas", "People", "Data", "Ideas", "People", "Ideas", "Data", "People", "Ideas", "Data", "People", "Ideas", "People", "Data"],
-    "Mathematical_Skills": [3, 5, 2, 4, 3, 5, 2, 4, 3, 5, 4, 2, 3, 4, 5, 4, 5, 3, 5, 4],
-    "Scientific_Concepts": [3, 5, 1, 4, 5, 5, 3, 4, 3, 5, 4, 1, 3, 4, 5, 4, 4, 3, 5, 3],
-    "Additional_Maths_Skills": [4, 5, 2, 3, 4, 5, 3, 2, 4, 5, 3, 2, 4, 5, 4, 3, 5, 4, 3, 5],
-    "Artistic_Abilities": [5, 2, 1, 3, 5, 4, 5, 3, 2, 1, 2, 3, 5, 4, 3, 5, 3, 4, 2, 3],
-    "Lab_Tasks_Comfort": [2, 5, 1, 4, 4, 3, 1, 5, 3, 4, 5, 2, 4, 3, 5, 4, 2, 3, 4, 3],
-    "Business_Concepts": [1, 3, 5, 2, 3, 4, 3, 5, 4, 5, 4, 5, 2, 3, 4, 5, 2, 4, 3, 5],
-    "English_Proficiency": [4, 5, 3, 2, 3, 4, 5, 4, 5, 3, 2, 5, 4, 3, 5, 2, 3, 5, 4, 4],
-    "Historical_Legal_Concepts": [2, 4, 5, 3, 4, 3, 5, 2, 4, 5, 3, 4, 3, 5, 4, 3, 5, 4, 2, 5],
-    "Islamic_Studies": [3, 2, 5, 4, 3, 5, 2, 3, 4, 5, 2, 4, 3, 5, 2, 4, 3, 5, 3, 5],
-    "Bahasa_Malaysia": [5, 3, 4, 2, 5, 4, 3, 2, 5, 3, 4, 1, 5, 3, 2, 3, 5, 4, 2, 3],
-    "Problem_Solving_Enjoyment": [4, 5, 3, 2, 4, 5, 3, 2, 4, 5, 3, 2, 4, 5, 3, 2, 4, 5, 3, 2],
-    "Practical_Theoretical": [3, 5, 2, 4, 5, 3, 4, 2, 5, 3, 4, 5, 3, 4, 5, 2, 4, 5, 3, 4],
-    "Creativity_Level": [5, 3, 2, 4, 5, 4, 5, 3, 4, 2, 3, 5, 5, 3, 4, 5, 4, 2, 3, 5],
-    "Tech_Comfort": [4, 5, 3, 2, 5, 4, 2, 3, 4, 5, 3, 2, 5, 4, 3, 5, 4, 3, 5, 2],
-    "Financial_Data_Comfort": [2, 3, 5, 4, 3, 5, 4, 2, 3, 5, 4, 5, 3, 4, 5, 2, 5, 3, 4, 5],
-    "Psychology_Interest": [3, 2, 4, 5, 4, 3, 5, 4, 5, 3, 2, 5, 3, 5, 4, 4, 5, 4, 3, 5],
-    "Travel_Hospitality_Interest": [1, 3, 4, 5, 5, 2, 3, 5, 4, 1, 2, 4, 3, 5, 4, 2, 5, 3, 4, 3],
-    "Leadership_Confidence": [3, 5, 4, 2, 5, 4, 3, 2, 5, 4, 5, 3, 4, 5, 3, 5, 4, 3, 5, 4],
-    "Environment_Preference": [3, 5, 2, 4, 5, 3, 5, 4, 2, 3, 4, 3, 5, 5, 2, 4, 5, 3, 5, 2],
-    "Education_Interest": [4, 2, 5, 3, 4, 5, 3, 4, 5, 2, 3, 5, 4, 3, 5, 3, 5, 4, 2, 4],
-    "Course": ["Arts and Design", "Engineering", "Business", "Science", "Biotechnology", "Food Technology", "Fine Arts and Design", "Commerce", "Information Technology", "Law and Policing", "Islamic Studies and TESL", "Arts and Media", "Psychology and Health", "Education", "Travel and Hospitality", "General", "Engineering", "Science", "Biotechnology", "Food Technology"]
-}
+# Load data from a spreadsheet
+def load_data(filepath):
+    df = pd.read_excel(filepath)
+    print("Columns in the dataset:", df.columns)
+    return df
 
-# Create a DataFrame
-df = pd.DataFrame(data)
+# Train the Decision Tree Model
+def train_decision_tree(X_train, y_train):
+    model = DecisionTreeClassifier()
+    model.fit(X_train, y_train)
+    return model
 
-# Define features and target
-X = df.drop("Course", axis=1)
-y = df["Course"]
+# Content-Based Filtering: Compute similarity scores
+def content_based_filtering(df, user_answers):
+    dataset_features = df.drop(columns=["Course"])
+    similarity_scores = cosine_similarity([user_answers], dataset_features)
+    most_similar_index = np.argmax(similarity_scores)
+    return df.iloc[most_similar_index]["Course"]
 
-# Encode categorical data
-X = pd.get_dummies(X)
+# Get user input
+def get_user_input():
+    print("Please answer the following questions on a scale of 1 to 5 where applicable:\n")
+    
+    questions = [
+        "1. Do you consider yourself more (1=creative, 2=analytical, or 3=practical)?",
+        "2. Which set of skills or interests best describes you?\n"
+        "   1. Problem-solving, logical thinking, and an interest in how things work.\n"
+        "   2. Curiosity about nature, scientific research, and exploring how the world works.\n"
+        "   3. Interest in biology, innovation, and working on solutions to health or environmental issues.\n"
+        "   4. Creativity in designing or making things, especially in food or other practical applications.\n"
+        "   5. Artistic talent, creativity, and a passion for visual expression.\n"
+        "   6. Business-minded, with an interest in economics, finance, or managing projects.\n"
+        "   7. Interest in technology, computers, and solving problems using logical approaches.\n"
+        "   8. Passion for history, law, or making a difference in society through governance or public service.\n"
+        "   9. Interest in teaching, religious studies, or exploring cultural traditions.\n"
+        "  10. Communication skills, creativity, and a passion for media, storytelling, or the arts.\n"
+        "  11. Interest in understanding human behavior, empathy, and helping others.\n"
+        "  12. Enjoy working with people, sharing knowledge, and guiding others.\n"
+        "  13. Love for exploring new places, cultures, and organizing travel experiences.\n"
+        "   (Enter the number corresponding to your choice): ",
+        "3. How do you approach solving problems: (1=step-by-step or 2=intuitively)?",
+        "4. Are you more comfortable working with (1=data, 2=people, or 3=ideas)?",
+        "5. How would you describe your learning style: (1=visual, 2=auditory, 3=reading/writing, or 4=kinesthetic)?",
+        "6. How confident are you in your mathematical skills? (1 = Not confident, 5 = Very confident)",
+        "7. How would you rate your ability to understand and apply scientific concepts like biology, physics, or chemistry? (1 = Poor, 5 = Excellent)",
+        "8. How proficient are you in solving additional mathematics problems? (1 = Not proficient, 5 = Highly proficient)",
+        "9. How would you rate your artistic or visual design abilities? (1 = Very weak, 5 = Very strong)",
+        "10. How comfortable are you working on experiments or lab-based tasks? (1 = Very uncomfortable, 5 = Very comfortable)",
+        "11. How would you rate your understanding of economics, accounting, or business concepts? (1 = Very weak, 5 = Very strong)",
+        "12. How confident are you in your command of the English language, both written and spoken? (1 = Not confident, 5 = Very confident)",
+        "13. How skilled are you at analyzing historical or legal concepts? (1 = Not skilled, 5 = Highly skilled)",
+        "14. How strong is your grasp of Islamic Studies or moral concepts? (1 = Very weak, 5 = Very strong)",
+        "15. How well do you communicate in Bahasa Malaysia? (1 = Poorly, 5 = Fluently)",
+        "16. How much do you enjoy solving complex problems? (1 = Not at all, 5 = Very much)",
+        "17. Do you prefer hands-on, practical work or theoretical study? (1 = Entirely theoretical, 5 = Entirely practical)",
+        "18. How creative are you in coming up with new ideas or designs? (1 = Not creative, 5 = Highly creative)",
+        "19. How comfortable are you working with technology and learning new software tools? (1 = Not comfortable, 5 = Very comfortable)",
+        "20. Do you enjoy working with numbers and financial data? (1 = Not at all, 5 = Very much)",
+        "21. How much do you enjoy exploring human behavior or psychological concepts? (1 = Not at all, 5 = Very much)",
+        "22. Do you enjoy planning trips, learning about different cultures, or engaging in hospitality-related tasks? (1 = Not at all, 5 = Very much)",
+        "23. How confident are you in your ability to lead and manage projects or teams? (1 = Not confident, 5 = Very confident)",
+        "24. Do you prefer working in structured environments or dynamic, creative spaces? (1 = Entirely structured, 5 = Entirely dynamic)",
+        "25. How interested are you in contributing to society through teaching or educational programs? (1 = Not at all, 5 = Very interested)"
+    ]
 
-# Train the decision tree model
-model = DecisionTreeClassifier()
-model.fit(X, y)
+    user_input = []
+    for idx, question in enumerate(questions):
+        while True:
+            try:
+                answer = int(input(f"{question}\nYour answer: "))
+                
+                # Custom range validation
+                if idx == 1:  # Question 2 allows 1-13
+                    if 1 <= answer <= 13:
+                        user_input.append(answer)
+                        break
+                elif 1 <= answer <= 5:  # Most questions allow 1-5
+                    user_input.append(answer)
+                    break
+                elif idx in [0, 2, 3]:  # Questions with a smaller range
+                    if 1 <= answer <= 3:
+                        user_input.append(answer)
+                        break
+                else:
+                    print("Please enter a valid number within the range.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+    return user_input
 
-# Questionnaire
-print("Please answer the following questions:")
+# Main Function
+def main():
+    # Load data from a spreadsheet
+    filepath = r'C:\Users\User\QuestionnaireResultsHelper.xlsx'
+    df = load_data(filepath)
+    
+    # Prepare the dataset
+    X = df.drop(columns=["Course"])
+    y = df["Course"]
+    
+    # Encode the target labels
+    le = LabelEncoder()
+    y_encoded = le.fit_transform(y)
+    
+    # Split the dataset into training and testing subsets
+    X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
+    
+    # Train the Decision Tree
+    model = train_decision_tree(X_train, y_train)
+    
+    # Get user input
+    user_answers = get_user_input()
+    
+    # Convert user input to DataFrame with matching feature names
+    user_answers_df = pd.DataFrame([user_answers], columns=X.columns)
+    
+    # Decision Tree Prediction
+    prediction = model.predict(user_answers_df)
+    recommended_course_dt = le.inverse_transform(prediction)[0]
+    
+    # Content-Based Filtering
+    recommended_course_cb = content_based_filtering(df, user_answers)
+    
+    # Combine and Display Results
+    print("\nRecommendation Results:")
+    print(f"Decision Tree AI suggests: {recommended_course_dt}")
+    print(f"Content-Based Filtering suggests: {recommended_course_cb}")
+    if recommended_course_dt == recommended_course_cb:
+        print(f"Final Recommendation: {recommended_course_dt}")
+    else:
+        print(f"Combined Recommendation: {recommended_course_dt} (primary), {recommended_course_cb} (secondary)")
+    
+    # Evaluate the model
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"\nDecision Tree Model Accuracy on Test Data: {accuracy * 100:.2f}%")
 
-def ask_question(prompt, valid_responses=None):
-    while True:
-        answer = input(prompt).strip()
-        if valid_responses:
-            if answer in valid_responses:
-                return answer
-            else:
-                print(f"Invalid response. Please choose one of the following: {', '.join(valid_responses)}.")
-        elif answer:
-            return answer
-        else:
-            print("Input cannot be empty. Please provide a valid answer.")
+# Run the program
+if __name__ == "__main__":
+    main()
 
-# Questions 1-4 (Multiple Choice)
-q1 = input("Do you consider yourself more creative, analytical, or practical? (Creative/Analytical/Practical): ")
-q2 = input("Which set of skills or interests best describes you?\n" +
-           "1. Problem-solving, logical thinking, and an interest in how things work.\n" +
-           "2. Curiosity about nature, scientific research, and exploring how the world works.\n" +
-           "3. Interest in biology, innovation, and working on solutions to health or environmental issues.\n" +
-           "4. Creativity in designing or making things, especially in food or other practical applications.\n" +
-           "5. Artistic talent, creativity, and a passion for visual expression.\n" +
-           "6. Business-minded, with an interest in finance, marketing, or entrepreneurship.\n" +
-           "7. Passion for studying law, justice, and the application of legal systems.\n" +
-           "8. Interest in human behavior, mental processes, and research in psychology.\n" +
-           "9. A desire to help others learn and grow through education and teaching.\n" +
-           "10. Interest in managing projects, customer service, and hospitality.\n" +
-           "(Enter the full description): ")
-q3 = input("How do you approach solving problems: step-by-step or intuitively? (Step-by-step/Intuitively): ")
-q4 = input("Are you more comfortable working with data, people, or ideas? (Data/People/Ideas): ")
 
-# Questions 5-24 (1-5 Scale)
-scores = []
-questions = [
-    "How confident are you in your mathematical skills?",
-    "How would you rate your ability to understand and apply specific scientific concepts like biology, physics, and chemistry?",
-    "How proficient are you in solving additional mathematics problems?",
-    "How would you rate your artistic or visual design abilities?",
-    "How comfortable are you working on experiments or lab-based tasks?",
-    "How would you rate your understanding of economics, accounting, or business concepts?",
-    "How confident are you in your command of the English language, both written and spoken?",
-    "How skilled are you at analyzing historical or legal concepts?",
-    "How strong is your grasp of Islamic Studies or moral concepts?",
-    "How well do you communicate in Bahasa Malaysia?",
-    "How much do you enjoy solving complex problems?",
-    "How do you prefer hands-on, practical work or theoretical study?",
-    "How creative are you in coming up with new ideas or designs?",
-    "How comfortable are you working with technology and learning new software tools?",
-    "Do you enjoy working with numbers and financial data?",
-    "How much do you enjoy exploring human behavior or psychological concepts?",
-    "Do you enjoy planning trips, learning about different cultures, or engaging in hospitality-related tasks?",
-    "How confident are you in your ability to lead and manage projects or teams?",
-    "Do you prefer working in structured environments or dynamic, creative spaces?",
-    "How interested are you in contributing to society through teaching or educational programs?"
-]
-for i, question in enumerate(questions, start=1):
-    score = int(input(f"{i}. {question} (1-5): "))
-    scores.append(score)
-
-# Prepare input data for the model
-input_data = {
-    "Creative_Analytical_Practical": [q1],
-    "Skill_Interest_Set": [q2],
-    "Problem_Solving_Approach": [q3],
-    "Comfort_Working_With": [q4],
-    "Mathematical_Skills": [scores[0]],
-    "Scientific_Concepts": [scores[1]],
-    "Additional_Maths_Skills": [scores[2]],
-    "Artistic_Abilities": [scores[3]],
-    "Lab_Tasks_Comfort": [scores[4]],
-    "Business_Concepts": [scores[5]],
-    "English_Proficiency": [scores[6]],
-    "Historical_Legal_Concepts": [scores[7]],
-    "Islamic_Studies": [scores[8]],
-    "Bahasa_Malaysia": [scores[9]],
-    "Problem_Solving_Enjoyment": [scores[10]],
-    "Practical_Theoretical": [scores[11]],
-    "Creativity_Level": [scores[12]],
-    "Tech_Comfort": [scores[13]],
-    "Financial_Data_Comfort": [scores[14]],
-    "Psychology_Interest": [scores[15]],
-    "Travel_Hospitality_Interest": [scores[16]],
-    "Leadership_Confidence": [scores[17]],
-    "Environment_Preference": [scores[18]],
-    "Education_Interest": [scores[19]]
-}
-
-input_df = pd.DataFrame(input_data)
-input_df = pd.get_dummies(input_df)
-
-# Align input data with model's feature set
-input_df = input_df.reindex(columns=X.columns, fill_value=0)
-
-# Predict course
-predicted_course = model.predict(input_df)[0]
-print(f"Based on your responses, the recommended course is: {predicted_course}")
