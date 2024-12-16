@@ -1,39 +1,53 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles.css";
+import axios from 'axios';
 
 function Questionnaire({ grades, onSubmit }) {
-  const [responses, setResponses] = useState({});
+  const [answers, setAnswers] = useState({});
+  const [recommendation, setRecommendation] = useState(null);
   const navigate = useNavigate();
 
   const questions = [
     {
       type: "multipleChoice",
       question: "Do you consider yourself more creative, analytical, or practical?",
-      options: ["Creative", "Analytical", "Practical"],
+      options: ["1-Creative", "2-Analytical", "3-Practical"],
     },
     {
       type: "multipleChoice",
       question: "Which set of skills or interests best describes you?",
       options: [
-        "Problem-solving, logical thinking, and an interest in how things work. (Engineering or Technology)",
-        "Curiosity about nature, scientific research, and exploring how the world works. (Science)",
-        "Interest in biology, innovation, and working on solutions to health or environmental issues. (Biotechnology)",
-        "Creativity in designing or making things, especially in food or other practical applications. (Food Technology or Creative Industries)",
-        "Artistic talent, creativity, and a passion for visual expression. (Arts and Design)",
-        "Business-minded, with an interest in finance, marketing, or entrepreneurship. (Business)",
+        "1. Problem-solving, logical thinking, and an interest in how things work.",
+        "2. Curiosity about nature, scientific research, and exploring how the world works.",
+        "3. Interest in biology, innovation, and working on solutions to health or environmental issues.",
+        "4. Creativity in designing or making things, especially in food or other practical applications.",
+        "5. Artistic talent, creativity, and a passion for visual expression.",
+        "6. Business-minded, with an interest in economics, finance, or managing projects.",
+        "7. Interest in technology, computers, and solving problems using logical approaches.",
+        "8. Passion for history, law, or making a difference in society through governance or public service.",
+        "9. Interest in teaching, religious studies, or exploring cultural traditions.",
+        "10. Communication skills, creativity, and a passion for media, storytelling, or the arts.",
+        "11. Interest in understanding human behavior, empathy, and helping others.",
+        "12. Enjoy working with people, sharing knowledge, and guiding others.",
+        "13. Love for exploring new places, cultures, and organizing travel experiences.",
       ],
     },
     {
       type: "multipleChoice",
       question: "How do you approach solving problems: step-by-step or intuitively?",
-      options: ["Step-by-step", "Intuitively"],
+      options: ["1-Step-by-step", "2-Intuitively"],
     },
     {
       type: "multipleChoice",
       question: "Are you more comfortable working with data, people, or ideas?",
-      options: ["Data", "People", "Ideas"],
+      options: ["1-Data", "2-People", "3-Ideas"],
     },
+    {
+      type: "multipleChoice",
+      question: "How would you describe your learning style: visual, auditory, reading/writing, or kinesthetic?",
+      options: ["1-Visual", "2-Auditory", "3-reading/writing","4-kinesthetic"],
+    },    
     {
       type: "radioScale",
       question: "How confident are you in your mathematical skills?",
@@ -42,7 +56,7 @@ function Questionnaire({ grades, onSubmit }) {
     },
     {
       type: "radioScale",
-      question: "How would you rate your ability to understand and apply specific scientific concepts like biology, physics and chemistry?",
+      question: "How would you rate your ability to understand and apply specific scientific concepts like biology, physics, and chemistry?",
       options: ["1", "2", "3", "4", "5"],
       labels: ["Poor", "Excellent"],
     },
@@ -54,7 +68,7 @@ function Questionnaire({ grades, onSubmit }) {
     },
     {
       type: "radioScale",
-      question: "How would you rate your artistics or visual design abilities?",
+      question: "How would you rate your artistic or visual design abilities?",
       options: ["1", "2", "3", "4", "5"],
       labels: ["Very Weak", "Very Strong"],
     },
@@ -66,7 +80,7 @@ function Questionnaire({ grades, onSubmit }) {
     },
     {
       type: "radioScale",
-      question: "How would you rate your understanding of economics, accounting or business concepts?",
+      question: "How would you rate your understanding of economics, accounting, or business concepts?",
       options: ["1", "2", "3", "4", "5"],
       labels: ["Very Weak", "Very Strong"],
     },
@@ -102,7 +116,7 @@ function Questionnaire({ grades, onSubmit }) {
     },
     {
       type: "radioScale",
-      question: "How you prefer hands-on, practical work or theoretical study?",
+      question: "How do you prefer hands-on, practical work or theoretical study?",
       options: ["1", "2", "3", "4", "5"],
       labels: ["Entirely theoretical", "Entirely Practical"],
     },
@@ -147,92 +161,47 @@ function Questionnaire({ grades, onSubmit }) {
       question: "Do you prefer working in structured environments or dynamic, creative spaces?",
       options: ["1", "2", "3", "4", "5"],
       labels: ["Entirely structured", "Entirely dynamic"],
-    },  
+    },
     {
       type: "radioScale",
       question: "How interested are you in contributing to society through teaching or educational programs?",
       options: ["1", "2", "3", "4", "5"],
       labels: ["Not At All", "Very Interested"],
-    },                                  
-  ];
+    },
+  ];  
 
-  const handleAnswerChange = (questionIndex, answer) => {
-    setResponses({ ...responses, [questionIndex]: answer });
+  const handleChange = (index, value) => {
+    setAnswers({ ...answers, [index]: parseInt(value) });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    const courseMapping = {
-      Engineering: { questions: [0, 2, 14], weights: [2, 3, 1] },
-      Science: { questions: [1, 9, 10], weights: [3, 2, 1] },
-      Biotechnology: { questions: [1, 7, 8], weights: [3, 2, 1] },
-      "Food Technology": { questions: [1, 6, 7], weights: [2, 2, 1] },
-      "Fine Arts and Design": { questions: [1, 6, 16], weights: [3, 2, 1] },
-      Commerce: { questions: [9, 20, 21], weights: [3, 2, 1] },
-      IT: { questions: [0, 19, 14], weights: [2, 3, 1] },
-      Law: { questions: [11, 3, 21], weights: [2, 2, 1] },
-      Psychology: { questions: [11, 14, 20], weights: [3, 2, 1] },
-      Education: { questions: [11, 23, 22], weights: [3, 2, 1] },
-      "Travel and Hospitality": { questions: [21, 23, 20], weights: [3, 2, 1] },
-    };
-  
-    const courseScores = {};
-    for (const course in courseMapping) {
-      courseScores[course] = 0;
-    }
-  
-    for (const course in courseMapping) {
-      const { questions, weights } = courseMapping[course];
-      questions.forEach((questionIndex, idx) => {
-        const response = responses[questionIndex];
-        if (response) {
-          const responseScore = isNaN(response) ? 1 : parseInt(response, 10);
-          courseScores[course] += responseScore * weights[idx];
-        }
-      });
-    }
-  
-    const maxScore = Math.max(...Object.values(courseScores));
-    const normalizedScores = {};
-    for (const course in courseScores) {
-      normalizedScores[course] = (courseScores[course] / maxScore).toFixed(2);
-    }
-  
-    const sortedCourses = Object.entries(normalizedScores).sort(
-      (a, b) => b[1] - a[1]
-    );
-    const topCourse = sortedCourses[0][0];
-  
     try {
-      const data = {
-        grades,
-        responses,
-        scores: normalizedScores,
-      };
-  
-      const response = await fetch("http://localhost:5000/refine", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-  
-      if (response.ok) {
-        const { refinedCourse } = await response.json();
-        alert(`Your recommended course is: ${refinedCourse || topCourse}`);
-        navigate("/recommendation");
+      // Log answers to debug
+      console.log("Submitting answers:", answers);
+      
+      const response = await axios.post('/api/recommend', { answers });
+      
+      // Log the response data to debug
+      console.log("Response from server:", response);
+
+      setRecommendation(response.data.recommendation);
+
+      // Submit the recommended course to the server
+      await axios.post('/api/submit-course', { recommendedCourse: response.data.recommendation });
+
+    } catch (error) {
+      // Log detailed error to help debug
+      console.error("Error submitting answers:", error);
+      if (error.response) {
+        console.error("Response error:", error.response.data);
+      } else if (error.request) {
+        console.error("Request error:", error.request);
       } else {
-        const error = await response.json();
-        alert(`Failed to refine recommendation: ${error.error}`);
+        console.error("General error:", error.message);
       }
-    } catch (err) {
-      console.error("Error refining recommendation:", err);
-      alert("An error occurred while refining the recommendation.");
     }
   };
-  
 
   return (
     <div className="container">
@@ -248,9 +217,9 @@ function Questionnaire({ grades, onSubmit }) {
                     <input
                       type="radio"
                       name={`question-${index}`}
-                      value={option}
-                      checked={responses[index] === option}
-                      onChange={() => handleAnswerChange(index, option)}
+                      value={i + 1}
+                      onChange={(e) => handleChange(index, e.target.value)}
+                      required
                     />
                     {option}
                   </label>
@@ -265,8 +234,8 @@ function Questionnaire({ grades, onSubmit }) {
                       type="radio"
                       name={`question-${index}`}
                       value={option}
-                      checked={responses[index] === option}
-                      onChange={() => handleAnswerChange(index, option)}
+                      checked={answers[index] === parseInt(option)}
+                      onChange={(e) => handleChange(index, e.target.value)}
                     />
                     {option}
                   </label>
@@ -280,6 +249,12 @@ function Questionnaire({ grades, onSubmit }) {
           Submit
         </button>
       </form>
+      {recommendation && (
+        <div className="recommendation-result">
+          <h3>Recommended Course:</h3>
+          <p>{recommendation}</p>
+        </div>
+      )}
     </div>
   );
 }
